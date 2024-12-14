@@ -1,3 +1,5 @@
+// Calculator Function Logic
+
 // calcStateObj - Calculator State Object
 
 // 4 Properties
@@ -29,7 +31,7 @@ let storeNumber = (calcObj, number) => {
 
 // 1b. selectOperation
 
-let selectOperation = (calcObj, operation) => {
+let storeOperation = (calcObj, operation) => {
     calcObj.selectedOperation = operation
 }
 
@@ -64,3 +66,67 @@ let divide = (x,y) => {
 let multiply = (x,y) => {
     return x * y
 }
+
+// DOM Logic
+
+// DOM variables
+
+let calcDisplay = document.querySelector(".display");
+let numberNodeList = document.querySelectorAll(".number");
+let operatorNodeList = document.querySelectorAll(".operator");
+
+let clearBtn = document.querySelector(".clear");
+
+// Displaying Numbers
+
+let displayInputNumber = e => {
+
+    if (e.type == "click") {
+        calcDisplay.textContent += e.target.textContent;
+    }
+
+    if (e.type == "keydown") {
+        calcDisplay.textContent += e.key;
+    }
+
+}
+
+let numberKeyInput = e => {
+
+    let numberString = "1234567890.";
+    if (numberString.includes(e.key)) displayInputNumber(e);
+    
+}
+
+// Clearing display
+
+let clearDisplay = () => {
+
+    calcDisplay.textContent = "";
+
+}
+
+let backSpaceDelete = (e) => {
+
+    if (e.code == "Backspace") {
+        calcDisplay.textContent = calcDisplay.textContent.slice(0, -1);
+    }
+
+}
+
+// Event Listeners
+
+numberNodeList.forEach(
+
+    numberDiv => numberDiv.addEventListener("click", displayInputNumber)
+    
+);
+
+addEventListener("keydown", e => {
+
+    numberKeyInput(e);
+    backSpaceDelete(e);
+
+})
+
+clearBtn.addEventListener("click", clearDisplay);
