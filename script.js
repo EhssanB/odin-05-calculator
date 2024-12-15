@@ -1,187 +1,179 @@
-// Calculator Function Logic
+// Variables
 
-// calcStateObj - Calculator State Object
+let numberArray = [];
+let activeOperation;
+let calculationResult = 0;
+let isOperationActive = false;
+let isSecondClear = false;
 
-// 4 Properties
+let operationsObject = {
+    add(x,y) {
+        return Number(x) + Number(y)
+    },
 
-// 1. firstNumber
-// 2. SecondNumber
-// 3. selectedOperation
-// 4. calculationResult
+    subtract(x,y) {
+        return Number(x) - Number(y)
+    },
 
-let intiateStateObj = () => {
-    let add = (x, y) => {
-        return x + y
+    multiply(x,y) {
+        return Number(x) * Number(y)
+    },
+
+    divide(x,y) {
+        return Number(x) / Number(y)
     }
-    
-    let subtract = (x,y) => {
-        return x - y
-    }
-    
-    let divide = (x,y) => {
-        return x / y
-    }
-    
-    let multiply = (x,y) => {
-        return x * y
-    }
-    
-    return {
-        selectedNumbers: [],
-        selectedOperation: null,
-        calculationResult: 0,
-        isAfterOperation: false,
-        add,
-        subtract,
-        divide,
-        multiply
-    }
-} 
-
-let calcStateObj = intiateStateObj();
-
-// 3 Main Functions
-
-// 1a. storeNumber
-    // Accept sanitised input (ints and floats)
-    // Store number in state object
-
-let storeNumber = (calcObj, number) => {
-    calcObj.selectedNumbers.push(number);
 }
 
-// 1b. selectOperation
+// calculator function logic 
 
-let storeOperation = (calcObj, operation) => {
-    calcObj.selectedOperation = calcObj[operation];
+let calculateOperation = (numberArray, activeOperation) => {
+    let number1 = numberArray[0];
+    let number2 = numberArray[1];
+
+    let operation = operationsObject[activeOperation];
+
+    return operation(number1, number2);
 }
 
-// 2. calculateOperation
+// DOM logic
 
-let calculateOperation = calcObj => {
-    let x = calcObj.selectedNumbers[0];
-    let y = calcObj.selectedNumbers[1];
-
-    let operation = calcObj.selectedOperation;
-
-    let result = operation(x,y);
-
-    calcObj.calculationResult = result
-    calcObj.selectedNumbers = [result];
-}
-
-// 2a. add
-// 2b. subtract
-// 2c. divide
-// 2d. multiply
-
-// DOM Logic
-
-// DOM variables
+// DOM elements
 
 let calcDisplay = document.querySelector(".display");
 
-let numberNodeList = document.querySelectorAll(".number");
-let operatorNodeList = document.querySelectorAll(".operator");
-
 let clearBtn = document.querySelector(".clear");
+let signBtn = document.querySelector(".sign");
+let percentBtn = document.querySelector(".percent");
 
-// Displaying Numbers
+let numberList = document.querySelectorAll(".number");
+let operatorList = document.querySelectorAll(".operator");
 
-let displayInputNumber = e => {
+let equalBtn = document.querySelector(".equal");
 
-    if(calcStateObj.isAfterOperation) {
-        console.log("Number input has come after selecting operation")
+// DOM functions
+
+// Display Numbers
+
+let displayNumber = e => {
+
+    if (isOperationActive) {
         clearDisplay();
-        calcStateObj.isAfterOperation = false;
+        isOperationActive = false;
     }
 
-    if (e.type == "click") {
-        calcDisplay.textContent += e.target.textContent;
-    }
+    let numberInput = e.target.textContent;
+    calcDisplay.textContent += numberInput;
+};
+numberList.forEach(number => number.addEventListener("click", displayNumber));
 
-    if (e.type == "keydown") {
-        calcDisplay.textContent += e.key;
-    }
+// Clear Display
+
+let allClear = () => {
+    numberArray = [];
+    activeOperation = false;
+
+    let activeOpElement = document.querySelector(".active-op");
+    activeOpElement.classList.remove("active-op");
 
 }
 
-let numberKeyInput = e => {
-
-    if (e.code == "Period" && calcDisplay.textContent.includes(".")) return
-
-    let numberString = "1234567890.";
-    if (numberString.includes(e.key)) displayInputNumber(e);
-
-    console.log(e)
-    
-}
-
-// Clearing display
-
-let clearDisplay = () => {
-
+let clearDisplay = e => {
     calcDisplay.textContent = "";
-
 }
 
-let backSpaceDelete = (e) => {
-
-    if (e.code == "Backspace") {
-        calcDisplay.textContent = calcDisplay.textContent.slice(0, -1);
+clearBtn.addEventListener("click", () => {
+    
+    if (isSecondClear && activeOperation) {
+        allClear();
+        isSecondClear = false;
+    } else {
+        isSecondClear = true;
     }
 
-}
+    clearDisplay()
 
-// Event Listeners
+});
 
-numberNodeList.forEach(
+// Select Operation 
 
-    numberDiv => numberDiv.addEventListener("click", displayInputNumber)
-
-);
-
-addEventListener("keydown", e => {
-
-    numberKeyInput(e);
-    backSpaceDelete(e);
-
-})
-
-clearBtn.addEventListener("click", clearDisplay);
-
-// Operators:
-
-
-
-let storeInput = e => {
-
-    let selectedNumber = parseFloat(calcDisplay.textContent);
+let storeOperation = e => {
+    let currentNumber = calcDisplay.textContent;
     let selectedOperation = e.target.id;
 
-    if (calcStateObj.selectedOperation) {
-        
-        storeNumber(calcStateObj, selectedNumber);
-        calculateOperation(calcStateObj);
-
-        storeOperation(calcStateObj, selectedOperation);
-
-        calcDisplay.textContent = calcStateObj.calculationResult;
-        
-    } else {
-        
-        storeNumber(calcStateObj, selectedNumber);
-        storeOperation(calcStateObj, selectedOperation);
-
+    // If an operation has already been selected, do nothing
+    if (activeOperation) {
+        continueCalculation(currentNumber, e);
+        return
     }
+    // if an operation hasn't been selected:   
+        // store number on display and selected operation in variables
+    numberArray.push(currentNumber);
+    activeOperation =  selectedOperation;
+    isOperationActive = true;
 
-    calcStateObj.isAfterOperation = true;
-   
+    e.target.classList.add('active-op');
 }
 
-operatorNodeList.forEach( operator => {
-    
-    operator.addEventListener("click", storeInput)
+operatorList.forEach(operator => operator.addEventListener("click", storeOperation));
 
-} )
+// Calculate Operation
 
+let returnCalculation = e => {
+
+    if (!activeOperation) return;
+
+    // Caputure Number
+    let currentNumber = calcDisplay.textContent;
+    numberArray.push(currentNumber)
+
+    calculationResult = calculateOperation(numberArray, activeOperation);
+    calcDisplay.textContent = calculationResult;
+
+    // Reset Variables
+    allClear();
+
+    // Ensure that display is cleared when user enters new number
+    isOperationActive = true;
+}
+
+let continueCalculation = (number, newOperationDom) => {
+    numberArray.push(number);
+    let result = calculateOperation(numberArray, activeOperation);
+
+    calcDisplay.textContent = result;
+
+    numberArray = [result];
+    activeOperation = newOperationDom.target.id;
+
+    let oldOperationElement = document.querySelector(".active-op");
+    oldOperationElement.classList.remove('active-op');
+
+    newOperationDom.target.classList.add("active-op");
+}
+
+equalBtn.addEventListener("click", returnCalculation)
+
+// When User Enters Number:
+    // Store number in array
+    // Display number
+
+
+
+/* numberArray.push(
+    prompt("enter first number")
+)
+
+selectedOperation = prompt("enter operation")
+
+numberArray.push(
+    prompt("enter second number")
+)
+
+calculationResult = calculateOperation(numberArray, selectedOperation); */
+
+/* console.log(`The result of the calculation:
+       Number 1: ${numberArray[0]},
+       Number 2: ${numberArray[1]},
+       Operation: ${selectedOperation},
+       Result: ${calculationResult}`)
+    */

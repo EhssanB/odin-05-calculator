@@ -16,3 +16,7 @@
     
     font-size: 30px;
 }
+
+.active-op {
+    background-color: red;
+}
